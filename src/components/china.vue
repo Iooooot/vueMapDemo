@@ -1,11 +1,13 @@
 <template>
-  <div>
-    <h2>{{ history[history.length - 1] }}</h2>  <!--  展示当前地区名 -->
-    <div class="btns"> <!--  放大缩小按钮组 -->
+  <div :style="{ 'background': bgColor}">
+    <h2>{{ history[history.length - 1] }}</h2> <!--  展示当前地区名 -->
+    <div class=" btns">
+      <!--  放大缩小按钮组 -->
       <el-button icon="el-icon-circle-plus-outline" size="mini" plain @click="scaleMap(0)"></el-button>
       <el-button icon="el-icon-remove-outline" size="mini" plain @click="scaleMap(1)"></el-button>
     </div>
-    <el-breadcrumb separator-class="el-icon-arrow-right">  <!--  左上角访问历史面包屑 -->
+    <el-breadcrumb separator-class="el-icon-arrow-right">
+      <!--  左上角访问历史面包屑 -->
       <el-breadcrumb-item v-for="(v, i) in history" :key="i" @click.native="clickNav(v)">{{ v }}</el-breadcrumb-item>
     </el-breadcrumb>
     <div class="map" /> <!-- 地图绘画区域 -->
@@ -16,18 +18,20 @@
 import * as echarts from "echarts";
 
 export default {
+  props: ['bgColor', 'inRange', 'mapName', 'tipleft','tipright'],
   data() {
     return {
       history: [], //访问历史
-      dataList:{},//当前地图人口数据
+      dataList:{},//当前地图人口数据//
       coordinate:[], //地图上散点的经纬数组
       dataMax:-1, //当前区域数据最大值
       dataMin:999999,//当前区域数据最小值
       option: {  //地图的相关配置
         tooltip: {  //鼠标移入的提示标签
           trigger: "item",
-          formatter:  function(params) {  //格式化样式
-              return `人口数：${ params.data.value}万人`
+          formatter: (params)=>{
+            //格式化样式
+            return `${this.tipleft}${params.data.value}${this.tipright}`
           }
         },
         geo: {  //地图坐标 方便地图与散点图位置同步
@@ -39,9 +43,7 @@ export default {
               min: 0.5
           },
           label: {
-            normal: {
-              show: true
-            },
+            show: true,
             emphasis: {
               show: true,
             }
@@ -63,10 +65,8 @@ export default {
         //左侧数据导航条
         visualMap:{
           show: true,
-          min: 50,
-          max: 12000,
           left: '10%',
-          bottom: '50%',
+          bottom: '30%',
           seriesIndex: [0],
           text: ['高', '低'], // 文本，默认为数值文本
           inRange: {color:['#FF6464', '#FFA85A', '#FFEC6F', '#8BBCFE'].reverse()}
@@ -82,9 +82,7 @@ export default {
               min: 0.5
             },
             label: {
-              normal: {
-                show: true,
-              },
+              show: true,
               emphasis: {
                 show: true,
               }
@@ -93,9 +91,7 @@ export default {
               disabled: true
             },
             itemStyle: {
-              normal: {
-                borderColor: "#000",
-              },
+              borderColor: "#000",
               emphasis: {
                 areaColor: "#2B91B7",
                 shadowOffsetX: 0,
@@ -112,21 +108,20 @@ export default {
             name: '点',
             type: 'scatter',
             coordinateSystem: 'geo',
-            symbol: 'pin', //气泡
+            symbol: 'none', //气泡pin
             symbolSize: function(val) { //散点大小
                 return 0.01 * (val[2]*0.4) + 18.5;
             },
             label: {
-                normal: {
-                    formatter: function (params) {
-                      return `${params.data.value[2]}`
-                    },
-                    show: true,
-                    textStyle: {
-                        color: '#fff',
-                        fontSize: 12,
-                    }
-                }
+            formatter: function (params) {
+              console.log(params);
+              return `${params.data.value[2]}`
+            },
+            show: false,
+            textStyle: {
+                color: '#fff',
+                fontSize: 12,
+            } 
             },
             itemStyle: {
                 normal: {
@@ -149,6 +144,7 @@ export default {
     async showMap(mapName) { //绘画地图方法
       //1.首先获取地图json  
       const newMapJson = await this.$http.get('/data/' + mapName + '.json')
+      console.log(newMapJson);
       //2.注册地图
       echarts.registerMap(mapName, newMapJson.data)
       //记录散点经纬度
@@ -165,6 +161,9 @@ export default {
         //设置数据导航条的取值范围
         this.option.visualMap.max = parseInt(this.dataMax)
         this.option.visualMap.min = parseInt(this.dataMin)
+        if (this.inRange) {
+          this.option.visualMap.inRange = this.inRange 
+        }
         //设置option后echarts会自动重新绘画地图
         this.graph.setOption(this.option, true);
       }
@@ -198,6 +197,7 @@ export default {
         geo: { zoom: result }
       })
     },
+    
     //展示人口数据以及散点图
     async coordinateInit(mapName){
       //获取人口数据json
@@ -235,7 +235,12 @@ export default {
       });
     }
   },
+
   mounted() {
+    if (!this.bgColor) {
+       // 默认背景图片
+       this.bgColor = 'url(' + require('../assets/image/wallhaven-z8eqjv_2560x1920.png') + ')' 
+    }
     //指定地图容器
     this.graph = echarts.init(document.querySelector(".map"));
     //绑定单击事件
@@ -246,7 +251,9 @@ export default {
       }
     })
     //开始时展示的地图
-    this.showMap('中国');
+    this.showMap(this.mapName);
+    //自适应
+    window.onresize = this.graph.resize
   },
 };
 </script>

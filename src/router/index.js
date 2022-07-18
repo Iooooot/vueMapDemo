@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 const China = () => import('../components/china.vue')
+const Test = () => import('../components/test.vue')
 import Layout from '../layout'
 
 Vue.use(VueRouter)
@@ -9,11 +10,11 @@ const routes = [
   {
     path: '/',
     // component: Layout,
-    redirect: '/china'
+    redirect: '/test'
   },
   {
-    path: '/china',
-    component: China,
+    path: '/test',
+    component: Test,
   },
 ]
 

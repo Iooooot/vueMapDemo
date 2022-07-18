@@ -13,7 +13,7 @@ body {
     overflow: hidden;
     position: relative;
     font-family: "Microsoft Yahei", Arial, sans-serif;
-    background: #0a1631 url("../image//wallhaven-z8eqjv_2560x1920.png");
+    /* background: #0a1631 url("../image//wallhaven-z8eqjv_2560x1920.png"); */
 }
 
 .el-header {
